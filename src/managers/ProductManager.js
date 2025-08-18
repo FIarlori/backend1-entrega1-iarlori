@@ -1,7 +1,7 @@
-import fs from 'fs/promises';
-import path from 'path';
+const fs = require('fs/promises');
+const path = require('path');
 
-export class ProductManager {
+class ProductManager {
     constructor(filePath) {
         this.path = filePath;
         this.products = [];
@@ -41,12 +41,10 @@ export class ProductManager {
     async addProduct(productData) {
         const { title, description, code, price, stock, category } = productData;
         
-        // Validación de campos obligatorios
         if (!title || !description || !code || !price || !stock || !category) {
             throw new Error('Todos los campos son obligatorios');
         }
 
-        // Validar código único
         const codeExists = this.products.some(p => p.code === code);
         if (codeExists) throw new Error('El código del producto ya existe');
 
@@ -71,7 +69,6 @@ export class ProductManager {
         const productIndex = this.products.findIndex(p => p.id === id);
         if (productIndex === -1) throw new Error('Producto no encontrado');
 
-        // Prevenir actualización del ID
         if ('id' in updatedFields) delete updatedFields.id;
 
         this.products[productIndex] = {
@@ -95,3 +92,5 @@ export class ProductManager {
         return { message: 'Producto eliminado exitosamente' };
     }
 }
+
+module.exports = { ProductManager };
