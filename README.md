@@ -1,9 +1,11 @@
 # Entrega 1 – API de Productos y Carritos
-Servidor en Node.js + Express con persistencia en archivos JSON (FS). Escucha en puerto **8080**.
+Servidor backend desarrollado con Node.js + Express para gestión de e-commerce, con persistencia en archivos JSON (fs). Escucha en puerto **8080**.
 
 
-## Requisitos previos
-- Node.js 18+
+## 📋 Requisitos técnicos
+- Node.js v18+ (Recomendado LTS)
+- npm v9+
+- Postman o similar para testing
 
 
 ## Instalación
