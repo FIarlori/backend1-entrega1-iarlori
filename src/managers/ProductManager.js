@@ -5,6 +5,7 @@ class ProductManager {
     constructor(filePath) {
         this.path = filePath;
         this.products = [];
+        this.lastId = 0;
         this.init();
     }
 
@@ -13,6 +14,9 @@ class ProductManager {
             await fs.access(this.path);
             const data = await fs.readFile(this.path, 'utf-8');
             this.products = JSON.parse(data);
+            if (this.products.length > 0) {
+                this.lastId = Math.max(...this.products.map(p => typeof p.id === 'number' ? p.id : 0));
+            }
         } catch (error) {
             await this.saveProducts();
         }
@@ -23,7 +27,8 @@ class ProductManager {
     }
 
     generateId() {
-        return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+        this.lastId += 1;
+        return this.lastId;
     }
 
     async getProducts() {
@@ -33,16 +38,27 @@ class ProductManager {
 
     async getProductById(id) {
         await this.init();
-        const product = this.products.find(p => p.id === id);
+        const product = this.products.find(p => p.id == id);
         if (!product) throw new Error('Producto no encontrado');
         return product;
     }
 
     async addProduct(productData) {
         const { title, description, code, price, stock, category } = productData;
-        
-        if (!title || !description || !code || !price || !stock || !category) {
+        let thumbnails = productData.thumbnails;
+        if (!thumbnails && Array.isArray(productData.thumbnails) && productData.thumbnails.length > 0) {
+            thumbnails = productData.thumbnails[0];
+        }
+
+        if (!title || !description || !code || price === undefined || stock === undefined || !category || !thumbnails) {
             throw new Error('Todos los campos son obligatorios');
+        }
+
+        if (typeof price !== 'number' || isNaN(price) || price < 0) {
+            throw new Error('El campo price debe ser un número mayor o igual a 0');
+        }
+        if (typeof stock !== 'number' || isNaN(stock) || stock < 0) {
+            throw new Error('El campo stock debe ser un número mayor o igual a 0');
         }
 
         const codeExists = this.products.some(p => p.code === code);
@@ -53,11 +69,11 @@ class ProductManager {
             title,
             description,
             code,
-            price: Number(price),
+            price,
             status: true,
-            stock: Number(stock),
+            stock,
             category,
-            thumbnails: productData.thumbnails || []
+            thumbnails
         };
 
         this.products.push(newProduct);
@@ -66,10 +82,26 @@ class ProductManager {
     }
 
     async updateProduct(id, updatedFields) {
-        const productIndex = this.products.findIndex(p => p.id === id);
+        const productIndex = this.products.findIndex(p => p.id == id);
         if (productIndex === -1) throw new Error('Producto no encontrado');
 
         if ('id' in updatedFields) delete updatedFields.id;
+
+        if ('price' in updatedFields) {
+            if (typeof updatedFields.price !== 'number' || isNaN(updatedFields.price) || updatedFields.price < 0) {
+                throw new Error('El campo price debe ser un número mayor o igual a 0');
+            }
+        }
+        if ('stock' in updatedFields) {
+            if (typeof updatedFields.stock !== 'number' || isNaN(updatedFields.stock) || updatedFields.stock < 0) {
+                throw new Error('El campo stock debe ser un número mayor o igual a 0');
+            }
+        }
+
+        if ('thumbnails' in updatedFields && Array.isArray(updatedFields.thumbnails) && updatedFields.thumbnails.length > 0) {
+            updatedFields.thumbnails = updatedFields.thumbnails[0];
+            delete updatedFields.thumbnails;
+        }
 
         this.products[productIndex] = {
             ...this.products[productIndex],
@@ -82,8 +114,8 @@ class ProductManager {
 
     async deleteProduct(id) {
         const initialLength = this.products.length;
-        this.products = this.products.filter(p => p.id !== id);
-        
+        this.products = this.products.filter(p => p.id != id);
+
         if (this.products.length === initialLength) {
             throw new Error('Producto no encontrado');
         }
