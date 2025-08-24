@@ -30,5 +30,5 @@ node src/app.js
 
 
 ## Pruebas con Postman
-- Importa la colección ubicada en `docs/postman_collection.json`.
+- Importa la colección ubicada en `docs\postman\postman_collection.json`.
 - Todos los endpoints usan `http://localhost:8080` como base.
